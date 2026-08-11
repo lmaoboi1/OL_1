@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Booster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+            overscroll-behavior: none; /* Prevents bounce and swipe navigation on mobile */
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f0f4f8; /* Softer, slightly cinematic light gray/blue */
+            color: #0f172a;
+            overflow: hidden; /* Full screen, no scroll */
+            margin: 0;
+            padding: 0;
+            height: 100dvh; /* Changed to dynamic viewport height for better mobile experience */
+            width: 100%; /* Changed from 100vw to prevent horizontal scroll */
+            position: relative;
+        }
+
+        /* Cinematic Background Elements */
+        .ambient-light {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.6;
+            z-index: 0;
+            animation: float 10s ease-in-out infinite;
+        }
+
+        .light-1 {
+            top: -10%;
+            left: -10%;
+            width: 60vw;
+            height: 60vh;
+            background: radial-gradient(circle, rgba(147, 197, 253, 0.8) 0%, rgba(191, 219, 254, 0) 70%); /* Light blue */
+        }
+
+        .light-2 {
+            bottom: -20%;
+            right: -10%;
+            width: 70vw;
+            height: 70vh;
+            background: radial-gradient(circle, rgba(233, 213, 255, 0.8) 0%, rgba(216, 180, 254, 0) 70%); /* Light purple */
+            animation-delay: -5s;
+        }
+
+        .light-3 {
+            top: 40%;
+            left: 30%;
+            width: 40vw;
+            height: 40vh;
+            background: radial-gradient(circle, rgba(253, 230, 138, 0.4) 0%, rgba(253, 230, 138, 0) 70%); /* Soft yellow/gold */
+            animation-duration: 15s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(3vw, -5vh) scale(1.05); }
+            66% { transform: translate(-2vw, 4vh) scale(0.95); }
+        }
+
+        /* Full Screen Container for Steps */
+        .app-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Ensures child elements don't cause scrolling */
+        }
+
+        /* Extremely Smooth Step Transitions */
+        .step-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.9) translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                        visibility 0.8s;
+            pointer-events: none;
+            padding: 2rem;
+        }
+        
+        .step-active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+            z-index: 20;
+        }
+
+        /* --- Custom Carousel Styling --- */
+        .carousel-container {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            perspective: 1000px;
+            margin: 2rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-item {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            transform-origin: center;
+        }
+
+        .carousel-item svg {
+            width: 50px;
+            height: 50px;
+            transition: transform 0.3s ease;
+        }
+
+        .carousel-item:hover svg {
+            transform: scale(1.1);
+        }
+
+        /* Positioning states for carousel items */
+        .carousel-item.active {
+            transform: translateX(0) scale(1.2);
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 3;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15), 0 0 0 4px rgba(255,255,255,0.5);
+            border: 2px solid #3b82f6; /* Highlight active */
+        }
+
+        .carousel-item.prev {
+            transform: translateX(-100px) scale(0.8) rotateY(20deg);
+            opacity: 0.4;
+            pointer-events: auto;
+            z-index: 2;
+        }
+
+        .carousel-item.next {
+            transform: translateX(100px) scale(0.8) rotateY(-20deg);
+            opacity: 0.4;
+            pointer-events: auto;
+            z-index: 2;
+        }
+
+        /* Specific Brand Colors */
+        .item-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); color: white; border: none;}
+        .item-youtube { background: #FF0000; color: white; border: none;}
+        .item-tiktok { background: black; color: white; border: none;}
+        
+        .carousel-item.active.item-instagram { border: 3px solid rgba(255,255,255,0.8); box-shadow: 0 0 30px rgba(214, 36, 159, 0.4); }
+        .carousel-item.active.item-youtube { border: 3px solid rgba(255,255,255,0.8); box-shadow: 0 0 30px rgba(255, 0, 0, 0.4); }
+        .carousel-item.active.item-tiktok { border: 3px solid rgba(255,255,255,0.8); box-shadow: 0 0 30px rgba(0, 0, 0, 0.4); }
+
+
+        .carousel-controls {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .carousel-btn {
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #475569;
+        }
+        .carousel-btn:hover {
+            background: white;
+            color: #0f172a;
+            transform: scale(1.1);
+        }
+
+        /* Custom Slider Styling (Cinematic) */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 32px;
+            width: 32px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15), inset 0 0 0 2px rgba(0,0,0,0.05);
+            border: 3px solid #6366f1; /* Indigo */
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: rgba(226, 232, 240, 0.6);
+            border-radius: 9999px;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Glassmorphism Inputs & Buttons */
+        .glass-input {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 4px 10px rgba(0,0,0,0.03);
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus-within {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 8px 20px rgba(99, 102, 241, 0.15);
+            border-color: #818cf8;
+        }
+
+        .btn-cinematic {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-cinematic::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            transition: all 0.7s;
+        }
+        .btn-cinematic:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+        .btn-cinematic:hover::after {
+            left: 200%;
+        }
+        .btn-cinematic:disabled {
+            background: #cbd5e1;
+            box-shadow: none;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-cinematic:disabled::after { display: none; }
+
+
+        /* Profile Card - Cinematic Light */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255,255,255,0.5) inset;
+        }
+
+        /* Typography Enhancements */
+        .text-gradient {
+            background: linear-gradient(to right, #1e293b, #475569);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Success Screen Animations */
+        .success-glow {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(167, 243, 208, 0.8) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            filter: blur(20px);
+            z-index: -1;
+            animation: pulse-glow 2s infinite alternate;
+        }
+        
+        @keyframes pulse-glow {
+            from { transform: scale(0.8); opacity: 0.5; }
+            to { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        /* Back Button */
+        .back-btn {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            z-index: 50;
+            padding: 0.75rem;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.8);
+            color: #64748b;
+            transition: all 0.3s;
+            display: none; /* Managed by JS */
+        }
+        .back-btn:hover {
+            background: white;
+            color: #0f172a;
+            transform: translateX(-3px);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Cinematic Background Ambient Lights -->
+    <div class="ambient-light light-1"></div>
+    <div class="ambient-light light-2"></div>
+    <div class="ambient-light light-3"></div>
+
+    <!-- Global Back Button -->
+    <button id="globalBackBtn" class="back-btn shadow-sm" onclick="goBack()">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </button>
+
+    <main class="app-container">
+        
+        <!-- Step 1: Platform Selection -->
+        <div id="step1" class="step-container step-active">
+            <div class="text-center mb-2">
+                <h1 class="text-4xl md:text-5xl font-black text-gradient tracking-tight mb-3">Select Platform</h1>
+                <p class="text-slate-500 text-lg max-w-md mx-auto">Swipe or click to choose where you want to boost your presence.</p>
+            </div>
+
+            <!-- Custom 3D-ish Carousel -->
+            <div class="carousel-container" id="platformCarousel">
+                <!-- Items populated via JS for easier state management, but base HTML structure here for clarity if JS fails early -->
+            </div>
+
+            <div class="carousel-controls">
+                <button class="carousel-btn shadow-sm" id="carouselPrev">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <button class="carousel-btn shadow-sm" id="carouselNext">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+
+            <div class="mt-10 w-full max-w-sm">
+                <p class="text-center text-sm font-semibold text-slate-600 mb-4 tracking-wider uppercase" id="selectedPlatformName">Instagram</p>
+                <button id="btnNext1" class="w-full py-4 rounded-2xl btn-cinematic text-lg font-bold tracking-wide">
+                    CONTINUE
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Username Input -->
+        <div id="step2" class="step-container">
+            <div class="w-full max-w-md mx-auto text-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-3 tracking-tight">Enter Username</h2>
+                <p class="text-slate-500 mb-10 text-sm md:text-base">Paste the link or username below.</p>
+
+                <div class="relative mb-10 group glass-input rounded-2xl p-2 flex items-center">
+                    <span class="pl-3 md:pl-4 text-slate-400 font-bold text-lg md:text-xl select-none">@</span>
+                    <!-- Added readonly to prevent keyboard/focus -->
+                    <input type="text" id="usernameInput" placeholder="username" class="w-full bg-transparent border-none text-slate-800 text-lg md:text-2xl font-medium focus:ring-0 block pl-2 pr-20 py-3 md:py-4 outline-none placeholder:text-slate-300" autocomplete="off" spellcheck="false" readonly>
+                    
+                    <!-- Removed text, kept icon only -->
+                    <button id="pasteBtn" class="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 bg-white hover:bg-slate-50 text-slate-700 p-3 rounded-xl transition-colors flex items-center justify-center shadow-sm border border-slate-100">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    </button>
+                </div>
+
+                <button id="btnNext2" class="w-full py-4 rounded-2xl btn-cinematic text-lg font-bold tracking-wide flex justify-center items-center gap-2">
+                    FIND PROFILE
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Boost Configuration (Profile & Slider) -->
+        <div id="step3" class="step-container">
+            <div class="w-full max-w-lg mx-auto flex flex-col items-center">
+                
+                <h2 class="text-2xl font-bold text-slate-800 mb-6 text-center w-full">Configure Boost</h2>
+
+                <!-- Cinematic Profile Card -->
+                <div class="profile-card rounded-3xl p-6 md:p-8 w-full relative overflow-hidden mb-6 md:mb-8">
+                    <!-- Decorative subtle gradient behind profile -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 z-0"></div>
+                    
+                    <div class="relative z-10 flex flex-col items-center">
+                        <!-- PFP Wrapper -->
+                        <div class="relative mb-4">
+                            <div class="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full blur-md opacity-50"></div>
+                            <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white p-1 relative z-10">
+                                <div class="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-400 overflow-hidden border border-slate-200">
+                                    <img src="https://i.pinimg.com/236x/bb/23/50/bb2350109863ae3c230542f13fc3a002.jpg?nii=t" alt="Profile Picture" class="w-full h-full object-cover">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="font-bold text-xl md:text-2xl text-slate-800 tracking-tight" id="displayUsername">@username</h3>
+                        <p class="text-xs md:text-sm text-slate-500 mb-6 font-medium" id="displayPlatform">Platform</p>
+
+                        <!-- Stats Grid -->
+                        <div class="flex w-full justify-between items-center bg-white/50 rounded-2xl p-3 md:p-4 border border-white/60">
+                            <div class="flex-1 text-center">
+                                <div class="font-bold text-slate-700 text-lg md:text-xl">0</div>
+                                <div class="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">Following</div>
+                            </div>
+                            <div class="w-px h-8 bg-slate-200"></div>
+                            <div class="flex-1 text-center relative group">
+                                <div class="absolute inset-0 bg-indigo-50 rounded-lg opacity-0 transition-opacity"></div>
+                                <div class="font-black text-indigo-600 text-2xl md:text-3xl transition-all duration-300 relative z-10" id="displayFollowers">0</div>
+                                <div class="text-[10px] md:text-xs text-indigo-400 font-bold uppercase tracking-wider mt-1 relative z-10">Followers</div>
+                            </div>
+                            <div class="w-px h-8 bg-slate-200"></div>
+                            <div class="flex-1 text-center">
+                                <div class="font-bold text-slate-700 text-lg md:text-xl">0</div>
+                                <div class="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">Likes</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slider Section -->
+                <div class="w-full bg-white/60 backdrop-blur-md rounded-3xl p-6 border border-white/80 shadow-sm mb-8">
+                    <div class="flex justify-between items-end mb-6">
+                        <label class="text-sm font-bold text-slate-700 uppercase tracking-wider">Followers to Add</label>
+                        <div class="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg font-black text-lg tracking-tight" id="sliderValueBadge">+0</div>
+                    </div>
+                    
+                    <div class="relative w-full h-10 flex items-center">
+                        <!-- Custom track background -->
+                        <div class="absolute w-full h-3 bg-slate-200/80 rounded-full pointer-events-none overflow-hidden">
+                             <!-- Dynamic fill: Switched to transition-colors so width changes instantly with no lag -->
+                             <div class="absolute h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full pointer-events-none transition-colors duration-200" id="sliderFill" style="width: 0%;"></div>
+                        </div>
+                        
+                        <!-- 0 to 100M slider -->
+                        <!-- max is 100,000,000, step is 100,000 to keep it manageable but smooth enough visually -->
+                        <input type="range" min="0" max="100000000" step="100000" value="0" id="followerSlider" class="absolute z-10 w-full h-full opacity-0 cursor-pointer">
+                        
+                        <!-- Custom visual thumb: Switched to transition-colors so position changes instantly with no lag -->
+                        <div class="absolute w-8 h-8 bg-white border-4 border-indigo-500 rounded-full shadow-lg pointer-events-none transform -translate-x-1/2 -translate-y-1/2 top-1/2 transition-colors duration-200 flex items-center justify-center z-20" id="customThumb" style="left: 0%;">
+                            <div class="w-2 h-2 bg-indigo-500 rounded-full transition-colors duration-200"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between text-xs text-slate-400 mt-4 font-bold uppercase tracking-wider">
+                        <span>0</span>
+                        <span>100M Max</span>
+                    </div>
+                </div>
+
+                <button id="btnBoost" class="w-full py-5 rounded-2xl btn-cinematic text-xl font-black tracking-wider flex justify-center items-center gap-3">
+                    <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    BOOST MY ACCOUNT
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Cinematic Success Screen -->
+        <div id="step4" class="step-container">
+            <div class="relative w-full max-w-lg mx-auto flex flex-col items-center justify-center text-center">
+                
+                <div class="success-glow opacity-0 transition-opacity duration-1000 delay-300" id="successGlow"></div>
+
+                <div class="w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full bg-white shadow-2xl flex items-center justify-center text-emerald-500 mb-8 transform scale-0 transition-all duration-700 delay-300 ease-out relative z-10" id="successIcon">
+                    <div class="absolute inset-0 rounded-full border-4 border-emerald-100 scale-150 animate-ping opacity-20"></div>
+                    <svg class="w-12 h-12 md:w-14 md:h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                
+                <h2 class="text-4xl md:text-5xl font-black text-slate-800 mb-4 opacity-0 transform translate-y-4 transition-all duration-700 delay-500 tracking-tight" id="successTitle">Boost Active!</h2>
+                <p class="text-slate-500 text-base md:text-lg mb-12 opacity-0 transform translate-y-4 transition-all duration-700 delay-700 max-w-sm" id="successDesc">Your request is being processed. Followers are rolling in.</p>
+
+                <div class="bg-white/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-white shadow-2xl w-full opacity-0 transform translate-y-8 transition-all duration-1000 delay-1000 relative overflow-hidden" id="successCard">
+                    <!-- Animated background gradient in card -->
+                    <div class="absolute inset-0 bg-gradient-to-r from-indigo-50 to-emerald-50 opacity-50 z-0"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-center mb-4">
+                             <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white p-1 relative shadow-sm border border-slate-100">
+                                <div class="w-full h-full rounded-full overflow-hidden">
+                                     <img src="https://i.pinimg.com/236x/bb/23/50/bb2350109863ae3c230542f13fc3a002.jpg?nii=t" alt="Profile Picture" class="w-full h-full object-cover">
+                                </div>
+                             </div>
+                        </div>
+
+                        <div class="flex items-center justify-center gap-2 mb-3">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <p class="text-xs md:text-sm text-slate-500 font-bold uppercase tracking-widest">Adding to <span id="finalUsername" class="text-slate-800"></span></p>
+                        </div>
+                        
+                        <!-- Dynamic counter -->
+                        <div class="text-3xl sm:text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-500 tracking-tighter py-4 leading-normal whitespace-nowrap w-full text-center" id="finalCounter">
+                            + 0
+                        </div>
+                        
+                        <!-- Progress bar mock -->
+                        <div class="w-full h-1.5 bg-slate-100 rounded-full mt-8 overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full w-0 transition-all duration-[3000ms] ease-out delay-[1200ms]" id="progressBar"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- Platform Data (Order: Instagram, YouTube Shorts, TikTok) ---
+        const platforms = [
+            {
+                id: 'instagram',
+                name: 'Instagram',
+                className: 'item-instagram',
+                icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`
+            },
+            {
+                id: 'youtube',
+                name: 'YouTube Shorts',
+                className: 'item-youtube',
+                // Updated specific Shorts Icon based on search results
+                icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.582,6.186c-0.23-0.86-0.908-1.538-1.768-1.768C18.254,4,12,4,12,4S5.746,4,4.186,4.418 c-0.86,0.23-1.538,0.908-1.768,1.768C2,7.746,2,12,2,12s0,4.254,0.418,5.814c0.23,0.86,0.908,1.538,1.768,1.768 C5.746,20,12,20,12,20s6.254,0,7.814-0.418c0.86-0.23,1.538-0.908,1.768-1.768C22,16.254,22,12,22,12S22,7.746,21.582,6.186z M9.996,15.005l0.005-6l5.207,3.005L9.996,15.005z"/></svg>`
+            },
+            {
+                id: 'tiktok',
+                name: 'TikTok',
+                className: 'item-tiktok',
+                icon: `<svg viewBox="0 0 448 512" fill="currentColor"><path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/></svg>`
+            }
+        ];
+
+        // --- App State ---
+        let state = {
+            step: 1,
+            activePlatformIndex: 0,
+            username: '',
+            boostAmount: 0
+        };
+
+        // --- DOM Elements ---
+        const steps = [
+            document.getElementById('step1'),
+            document.getElementById('step2'),
+            document.getElementById('step3'),
+            document.getElementById('step4')
+        ];
+        const globalBackBtn = document.getElementById('globalBackBtn');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        
+        // Carousel elements
+        const carouselContainer = document.getElementById('platformCarousel');
+        const selectedPlatformName = document.getElementById('selectedPlatformName');
+        const btnPrev = document.getElementById('carouselPrev');
+        const btnNext = document.getElementById('carouselNext');
+        
+        // Form elements
+        const usernameInput = document.getElementById('usernameInput');
+        const pasteBtn = document.getElementById('pasteBtn');
+        const btnNext1 = document.getElementById('btnNext1');
+        const btnNext2 = document.getElementById('btnNext2');
+        
+        // Slider elements
+        const slider = document.getElementById('followerSlider');
+        const sliderFill = document.getElementById('sliderFill');
+        const customThumb = document.getElementById('customThumb');
+        const displayFollowers = document.getElementById('displayFollowers');
+        const sliderValueBadge = document.getElementById('sliderValueBadge');
+        const btnBoost = document.getElementById('btnBoost');
+
+        // --- Helper Functions ---
+        // Format large numbers (e.g., 100,000,000)
+        const formatNumber = (num) => {
+            return num.toLocaleString('en-US');
+        };
+
+        // Format for profile display (e.g., 1.5M, 100K)
+        const formatCompact = (num) => {
+            if (num < 1000) return num;
+            if (num < 1000000) return (num / 1000).toFixed(num % 1000 !== 0 ? 1 : 0) + 'K';
+            return (num / 1000000).toFixed(num % 1000000 !== 0 ? 1 : 0) + 'M';
+        };
+
+        function showToast(msg) {
+            toastMsg.innerText = msg;
+            toast.style.transform = 'translate(-50%, 20px)'; // Move into view
+            setTimeout(() => {
+                toast.style.transform = 'translate(-50%, -150%)'; // Move out
+            }, 3000);
+        }
+
+        // --- Navigation Logic ---
+        function goToStep(targetStep) {
+            // Hide current
+            steps[state.step - 1].classList.remove('step-active');
+            
+            // Manage Back Button visibility
+            if (targetStep === 1 || targetStep === 4) {
+                globalBackBtn.style.display = 'none';
+            } else {
+                globalBackBtn.style.display = 'block';
+            }
+
+            state.step = targetStep;
+
+            // Show new after slight delay for smooth transition
+            setTimeout(() => {
+                steps[state.step - 1].classList.add('step-active');
+                
+                // Specific step initializations
+                if (targetStep === 2) {
+                    setupStep2();
+                } else if (targetStep === 3) {
+                    setupStep3();
+                } else if (targetStep === 4) {
+                    triggerCinematicSuccess();
+                }
+            }, 400); // Wait for fade out
+        }
+
+        function goBack() {
+            if (state.step > 1 && state.step < 4) {
+                goToStep(state.step - 1);
+            }
+        }
+
+
+        // --- Step 1: Carousel Logic ---
+        function initCarousel() {
+            // Build DOM elements
+            platforms.forEach((p, index) => {
+                const el = document.createElement('div');
+                el.className = `carousel-item ${p.className}`;
+                el.innerHTML = p.icon;
+                el.dataset.index = index;
+                
+                // Click to select specific item
+                el.addEventListener('click', () => {
+                    state.activePlatformIndex = index;
+                    updateCarousel();
+                });
+
+                // Swipe logic (Touch events)
+                let touchStartX = 0;
+                let touchEndX = 0;
+                
+                el.addEventListener('touchstart', e => {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, {passive: true});
+                
+                el.addEventListener('touchend', e => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                }, {passive: true});
+
+                function handleSwipe() {
+                    const threshold = 50;
+                    if (touchEndX < touchStartX - threshold) moveCarousel(1); // Swipe left -> Next
+                    if (touchEndX > touchStartX + threshold) moveCarousel(-1); // Swipe right -> Prev
+                }
+
+                carouselContainer.appendChild(el);
+            });
+
+            updateCarousel();
+        }
+
+        function moveCarousel(direction) {
+            state.activePlatformIndex = (state.activePlatformIndex + direction + platforms.length) % platforms.length;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const items = document.querySelectorAll('.carousel-item');
+            const total = platforms.length;
+            
+            items.forEach((item, index) => {
+                item.className = `carousel-item ${platforms[index].className}`; // Reset classes
+                
+                if (index === state.activePlatformIndex) {
+                    item.classList.add('active');
+                } else if (index === (state.activePlatformIndex - 1 + total) % total) {
+                    item.classList.add('prev');
+                } else if (index === (state.activePlatformIndex + 1) % total) {
+                    item.classList.add('next');
+                } else {
+                    // Hidden items if more than 3
+                    item.style.opacity = '0';
+                    item.style.pointerEvents = 'none';
+                }
+            });
+
+            selectedPlatformName.innerText = platforms[state.activePlatformIndex].name;
+        }
+
+        btnPrev.addEventListener('click', () => moveCarousel(-1));
+        btnNext.addEventListener('click', () => moveCarousel(1));
+        btnNext1.addEventListener('click', () => goToStep(2));
+
+
+        // --- Step 2: Username Input Logic ---
+        function setupStep2() {
+            setTimeout(() => usernameInput.focus(), 800);
+        }
+
+        usernameInput.addEventListener('input', (e) => {
+            state.username = e.target.value.trim();
+        });
+        
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') btnNext2.click();
+        });
+
+        pasteBtn.addEventListener('click', async (e) => {
+            // Removed e.preventDefault() as it can block the clipboard gesture recognition on Android
+            try {
+                const text = await navigator.clipboard.readText();
+                if (!text) return;
+                
+                // Basic cleanup for pasted urls vs usernames
+                let cleanText = text;
+                if(cleanText.includes('instagram.com/')) cleanText = cleanText.split('instagram.com/')[1].split('/')[0];
+                if(cleanText.includes('tiktok.com/@')) cleanText = cleanText.split('tiktok.com/@')[1].split('?')[0];
+                if(cleanText.includes('youtube.com/@')) cleanText = cleanText.split('youtube.com/@')[1];
+
+                usernameInput.value = cleanText.replace('@', '');
+                state.username = usernameInput.value;
+            } catch (err) {
+                // Silently handle if browser blocks clipboard access without showing popups
+            }
+        });
+
+        btnNext2.addEventListener('click', () => {
+            if (state.username.length < 2) {
+                showToast("Please enter a valid username");
+                usernameInput.focus();
+                return;
+            }
+            goToStep(3);
+        });
+
+
+        // --- Step 3: Boost Configuration (Slider) ---
+        function setupStep3() {
+            const platform = platforms[state.activePlatformIndex];
+            
+            document.getElementById('displayUsername').innerText = '@' + state.username;
+            document.getElementById('displayPlatform').innerText = platform.name;
+            
+            // Reset Slider
+            slider.value = 0;
+            updateSliderVisuals();
+        }
+
+        function updateSliderVisuals() {
+            const val = parseInt(slider.value);
+            state.boostAmount = val;
+            
+            // Calculate percentage
+            const min = slider.min ? parseInt(slider.min) : 0;
+            const max = slider.max ? parseInt(slider.max) : 100000000;
+            const percent = ((val - min) / (max - min)) * 100;
+            
+            // Update custom visuals
+            sliderFill.style.width = percent + '%';
+            customThumb.style.left = percent + '%';
+            
+            // Dynamic styling based on amount
+            const thumbInner = customThumb.firstElementChild;
+            if (percent > 80) {
+                customThumb.classList.add('border-emerald-500');
+                thumbInner.className = 'w-2 h-2 bg-emerald-500 rounded-full transition-colors duration-200';
+                sliderFill.className = 'absolute h-full rounded-full pointer-events-none transition-colors duration-200 bg-gradient-to-r from-indigo-500 to-emerald-500';
+            } else if (percent > 40) {
+                customThumb.classList.replace('border-indigo-500', 'border-purple-500') || customThumb.classList.replace('border-emerald-500', 'border-purple-500');
+                thumbInner.className = 'w-2 h-2 bg-purple-500 rounded-full transition-colors duration-200';
+                sliderFill.className = 'absolute h-full rounded-full pointer-events-none transition-colors duration-200 bg-gradient-to-r from-indigo-500 to-purple-500';
+            } else {
+                customThumb.className = 'absolute w-8 h-8 bg-white border-4 border-indigo-500 rounded-full shadow-lg pointer-events-none transform -translate-x-1/2 -translate-y-1/2 top-1/2 transition-colors duration-200 flex items-center justify-center z-20';
+                thumbInner.className = 'w-2 h-2 bg-indigo-500 rounded-full transition-colors duration-200';
+                sliderFill.className = 'absolute h-full rounded-full pointer-events-none transition-colors duration-200 bg-gradient-to-r from-blue-500 to-indigo-500';
+            }
+
+            // Scale thumb on max
+            if (percent === 100) {
+                customThumb.style.transform = 'translate(-50%, -50%) scale(1.3)';
+            } else {
+                customThumb.style.transform = 'translate(-50%, -50%) scale(1)';
+            }
+
+            // Update text displays
+            displayFollowers.innerText = formatCompact(val);
+            sliderValueBadge.innerText = '+' + formatCompact(val);
+        }
+
+        slider.addEventListener('input', updateSliderVisuals);
+
+        btnBoost.addEventListener('click', () => {
+            if (state.boostAmount === 0) {
+                showToast("Please drag the slider to add followers");
+                // Animate slider thumb to draw attention
+                customThumb.classList.add('animate-bounce');
+                setTimeout(() => customThumb.classList.remove('animate-bounce'), 1000);
+                return;
+            }
+            
+            // Loading state on button
+            const originalText = btnBoost.innerHTML;
+            btnBoost.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> INITIALIZING...';
+            btnBoost.disabled = true;
+
+            // Simulate API Connection Delay
+            setTimeout(() => {
+                btnBoost.innerHTML = originalText;
+                btnBoost.disabled = false;
+                goToStep(4);
+            }, 2000);
+        });
+
+
+        // --- Step 4: Cinematic Success Animation ---
+        function triggerCinematicSuccess() {
+            // Populate Data
+            document.getElementById('finalUsername').innerText = '@' + state.username;
+            const counterEl = document.getElementById('finalCounter');
+            
+            // Reset state
+            counterEl.innerText = '+ 0';
+            document.getElementById('progressBar').style.width = '0%';
+
+            // CSS Reveal sequence (classes managed in HTML via delays, just add classes to trigger)
+            document.getElementById('successGlow').classList.remove('opacity-0');
+            document.getElementById('successIcon').classList.remove('scale-0');
+            document.getElementById('successTitle').classList.remove('opacity-0', 'translate-y-4');
+            document.getElementById('successDesc').classList.remove('opacity-0', 'translate-y-4');
+            document.getElementById('successCard').classList.remove('opacity-0', 'translate-y-8');
+
+            // Trigger progress bar
+            setTimeout(() => {
+                document.getElementById('progressBar').style.width = '100%';
+            }, 1000);
+
+            // Cinematic Confetti Sequence
+            setTimeout(() => {
+                const duration = 4000;
+                const animationEnd = Date.now() + duration;
+                const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+                function randomInRange(min, max) {
+                    return Math.random() * (max - min) + min;
+                }
+
+                const interval = setInterval(function() {
+                    const timeLeft = animationEnd - Date.now();
+
+                    if (timeLeft <= 0) {
+                        return clearInterval(interval);
+                    }
+
+                    const particleCount = 50 * (timeLeft / duration);
+                    // Emit from two sides
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+                }, 250);
+                
+                // Big blast in middle
+                confetti({
+                    particleCount: 150,
+                    spread: 100,
+                    origin: { y: 0.6 },
+                    colors: ['#4f46e5', '#10b981', '#f59e0b', '#ec4899']
+                });
+
+            }, 1000);
+
+            // Super smooth Number Counter Animation (up to 100M)
+            setTimeout(() => {
+                let startTimestamp = null;
+                const duration = 3000; // 3 seconds to count up
+                const target = state.boostAmount;
+
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    
+                    // Custom easing: easeOutExpo for dramatic slowdown at end
+                    const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+                    
+                    const currentVal = Math.floor(easeProgress * target);
+                    
+                    // Format dynamically as it grows to keep it contained
+                    counterEl.innerText = '+ ' + formatNumber(currentVal);
+
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        counterEl.innerText = '+ ' + formatNumber(target);
+                        // Final visual pop
+                        counterEl.style.transform = 'scale(1.05)';
+                        counterEl.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                        counterEl.classList.add('drop-shadow-lg');
+                        setTimeout(() => {
+                            counterEl.style.transform = 'scale(1)';
+                        }, 200);
+                    }
+                };
+                window.requestAnimationFrame(step);
+            }, 1500); // Start counting slightly after card appears
+        }
+
+        // Initialize App
+        window.onload = () => {
+            initCarousel();
+            // Start at step 1
+            goToStep(1);
+        };
+
+    </script>
+</body>
+</html>
